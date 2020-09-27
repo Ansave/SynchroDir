@@ -1,0 +1,47 @@
+#!/bin/bash
+
+Overwrite () {
+echo -ne " File $1 is newer than $2\n Overwrite file $2? [y/n]: "
+read -n 1 ans
+echo
+if [[ $ans == [Yy] ]]; then
+	cp $1 $2
+	touch $1 -r $2
+fi
+}
+
+CheckNewer () {
+for file in $(ls $1)
+do
+	if [[ -e $2/$file ]] 
+	then
+		if [[ $(stat --format="%Y" $1/$file) -gt $(stat --format="%Y" $2/$file) ]]; then
+			Overwrite $1/$file $2/$file
+
+		elif [[ $(stat --format="%Y" $1/$file) -lt $(stat --format="%Y" $2/$file) ]]; then
+			Overwrite $2/$file $1/$file
+		fi
+	fi
+done
+}
+
+Add () {
+for file in $(ls $1)
+do
+	if [[ !(-e $2/$file) ]] 
+	then
+		cp $1/$file $2/$file
+		touch $1/$file -r $2/$file
+		echo " $file added to $2"
+	fi
+done
+}
+
+
+#PROGRAMM
+echo "Update:"
+CheckNewer $1 $2
+
+echo "Add:"
+Add $1 $2
+Add $2 $1
